@@ -4,17 +4,16 @@ import {useNavigate} from 'react-router-dom'
 import {useDispatch, useSelector} from "react-redux";
 import {setCategoryId, setCurrentPage, setFilters} from "../redux/slices/filterSlice";
 import Categories from "../components/Categories";
-import Sort from "../components/Sort";
 import PizzaBlock from "../components/PizzaBlock/pizzaBlock";
 import Skeleton from "../components/PizzaBlock/Skeleton";
 import Pagination from "../components/Pagination";
 import {SearchContext} from "../App";
 import axios from "axios";
-import { list } from "../components/Sort";
+
 
 const Home = () => {
     
-    const {categoryId, sort, currentPage} = useSelector((state) => state.filter)
+    const {categoryId, currentPage} = useSelector((state) => state.filter)
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const isSearch = React.useRef(false);
@@ -32,20 +31,13 @@ const Home = () => {
     
     const filterSlice = async () => {
         setIsLoading(true);
-        const sortBy = sort.sortProperty.replace('-',   '');
-        // из свойства удалить минус и добавляет свойство в переменную без минуса. Свойство в объекте не меняет
-        const order = sort.sortProperty.includes('-') ? 'asc' : 'desc';
-        const category = categoryId > 0 ? `category=${categoryId}` : '';
-        const search = searchValue ? `&search=${searchValue}` : '';
         
-        // await axios.get(`https://653bd07fd5d6790f5ec77cbc.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`
-        // ).then((res) => {
-        //     setItems(res.data);
-        //     setIsLoading(false)
-        // })
+        // из свойства удалить минус и добавляет свойство в переменную без минуса. Свойство в объекте не меняет
+        const category = categoryId > 0 ? `category=${categoryId}` : '';
+        console.log('категория' + category)
         
         try {
-            const res = await axios.get(`https://653bd07fd5d6790f5ec77cbc.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`)
+            const res = await axios.get(`https://653bd07fd5d6790f5ec77cbc.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=&order=`)
             setItems(res.data);
             setIsLoading(false);
         } catch (error) {
@@ -57,29 +49,27 @@ const Home = () => {
     
     // если изменили параметры и был первый рендер
     React.useEffect(() => {
+        console.log('при изменениии параметров' + isMounted.current)
         if (isMounted.current) {
             const queryString = qs.stringify({
-                sortProperty: sort.sortProperty,
                 categoryId,
                 currentPage,
             });
             navigate(`?${queryString}`)
         }
         isMounted.current = true;
-    }, [categoryId, sort.sortProperty, searchValue, currentPage])
+    }, [categoryId, searchValue, currentPage])
     
     
     // если был первый рендер, то проверяем url параметры и сохраняем в редуксе
     React.useEffect(() => {
         if(window.location.search) {
             const params = qs.parse(window.location.search.substring(1));
-            
-            const sort = list.find(obj => obj.sortProperty === params.sortProperty)
-            
+            // const sort = list.find(obj => obj.sortProperty === params.sortProperty)
+            //
             dispatch(
                 setFilters({
                     ...params,
-                    sort,
                 })
             )
             isSearch.current = true;
@@ -89,14 +79,14 @@ const Home = () => {
     // если был первый рендер, то запрашиваем пиццы
     React.useEffect(() => {
         window.scrollTo(0, 0); // что бы при попадании на страницу, scroll был сверху, а не снизу
-        
+        console.log(isSearch.current)
         if (!isSearch.current) {
             filterSlice();
         }
         
         isSearch.current = false;
         
-    }, [categoryId, sort.sortProperty, searchValue, currentPage]);
+    }, [categoryId, searchValue, currentPage]);
     
     
     // constent
@@ -111,7 +101,6 @@ const Home = () => {
                 <Categories value={categoryId} onChangeCategory = {onChangeCategory}/>
                 {/*в данном случае мы используем onClickCategory и в качестве второго параметра закладываем стрелочную функцию которая
                 возвращает id элементов категорий в данном случае это i см categories*/}
-                <Sort />
             </div>
             <h2 className="content__title">Все пиццы</h2>
             <div className="content__items">
