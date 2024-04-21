@@ -9,19 +9,20 @@ import PizzaBlock from "../components/PizzaBlock/pizzaBlock";
 import Skeleton from "../components/PizzaBlock/Skeleton";
 import Pagination from "../components/Pagination";
 import {SearchContext} from "../App";
-import axios from "axios";
 import { list } from "../components/Sort";
+import {fetchPizza} from "../redux/slices/pizzaSlice";
 
 const Home = () => {
    
     const {categoryId, sort, currentPage} = useSelector((state) => state.filter)
+    const items = useSelector((state) => state.pizza.items)
+    
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const isSearch = React.useRef(false);
     const isMounted = React.useRef(false);
     
     const {searchValue} = React.useContext(SearchContext)
-    const [items, setItems] = React.useState([])
     const [isLoading, setIsLoading] = React.useState(true)
     
     const onChangeCategory = (id) => {
@@ -38,21 +39,19 @@ const Home = () => {
         const category = categoryId > 0 ? `category=${categoryId}` : '';
         const search = searchValue ? `&search=${searchValue}` : '';
         
-        // await axios.get(`https://653bd07fd5d6790f5ec77cbc.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`
-        // ).then((res) => {
-        //     setItems(res.data);
-        //     setIsLoading(false)
-        // })
-        
         try {
-            const res = await axios.get(`https://653bd07fd5d6790f5ec77cbc.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`)
-            setItems(res.data);
-            setIsLoading(false);
+            dispatch(fetchPizza(
+                sortBy,
+                order,
+                category,
+                search,
+                currentPage,
+            ));
         } catch (error) {
-            setIsLoading(false);
             console.log(error);
+        } finally {
+            setIsLoading(false);
         }
-    
     }
     
     // если изменили параметры и был первый рендер
@@ -88,14 +87,9 @@ const Home = () => {
     
     // если был первый рендер, то запрашиваем пиццы
     React.useEffect(() => {
-        window.scrollTo(0, 0); // что бы при попадании на страницу, scroll был сверху, а не снизу
-        
         if (!isSearch.current) {
             filterSlice();
         }
-        
-        isSearch.current = false;
-        
     }, [categoryId, sort.sortProperty, searchValue, currentPage]);
     
     
