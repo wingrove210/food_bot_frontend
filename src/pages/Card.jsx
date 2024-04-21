@@ -19,6 +19,10 @@ const Card = () => {
     if(!totalPrice) {
         return <CartEmpty/>
     }
+    //
+    // console.log(items)
+    // console.log(totalPrice)
+    // console.log(totalCount)
     
     return (
         <div className="container container--cart">
